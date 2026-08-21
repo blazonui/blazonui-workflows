@@ -1,0 +1,48 @@
+name: Release Addon (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      curseforge-id:
+        description: "CurseForge-Projekt-ID (X-Curse-Project-ID), leer lassen wenn ungenutzt"
+        required: false
+        type: string
+      wago-id:
+        description: "Wago.io-Projekt-ID (X-Wago-ID), leer lassen wenn ungenutzt"
+        required: false
+        type: string
+    secrets:
+      CF_API_KEY:
+        required: false
+      WAGO_API_TOKEN:
+        required: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Build packager args
+        id: args
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.curseforge-id }}" ]; then ARGS="$ARGS -p ${{ inputs.curseforge-id }}"; fi
+          if [ -n "${{ inputs.wago-id }}" ]; then ARGS="$ARGS -a ${{ inputs.wago-id }}"; fi
+          echo "args=$ARGS" >> "$GITHUB_OUTPUT"
+
+      - name: Package and release
+        uses: BigWigsMods/packager@v2
+        with:
+          args: ${{ steps.args.outputs.args }}
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+          # @v2 ist auf einen aelteren release.sh-Stand eingefroren, der nur
+          # GITHUB_OAUTH als Env-Var-Namen fuer den Token kennt (nicht GITHUB_API_TOKEN).
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
