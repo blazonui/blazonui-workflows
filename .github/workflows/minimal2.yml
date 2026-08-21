@@ -1,0 +1,22 @@
+name: Minimal Reusable 2
+
+on:
+  workflow_call:
+    inputs:
+      curseforge-id:
+        required: false
+        type: string
+      wago-id:
+        required: false
+        type: string
+    secrets:
+      CF_API_KEY:
+        required: false
+      WAGO_API_TOKEN:
+        required: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "curseforge=${{ inputs.curseforge-id }} wago=${{ inputs.wago-id }}"
