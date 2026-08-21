@@ -16,12 +16,12 @@ on:
         required: false
       WAGO_API_TOKEN:
         required: false
+      DISCORD_RELEASE_WEBHOOK:
+        required: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,3 +46,13 @@ jobs:
           # @v2 ist auf einen aelteren release.sh-Stand eingefroren, der nur
           # GITHUB_OAUTH als Env-Var-Namen fuer den Token kennt (nicht GITHUB_API_TOKEN).
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Discord-Ankündigung
+        # Discords eingebautes GitHub-Webhook-Format rendert Release-Events
+        # unzuverlässig (getestet 2026-08-21: 204 OK, aber leere Nachricht) --
+        # deshalb eigener, garantiert sichtbarer Embed-Post.
+        if: ${{ secrets.DISCORD_RELEASE_WEBHOOK != '' }}
+        run: |
+          curl -sf -X POST "${{ secrets.DISCORD_RELEASE_WEBHOOK }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"embeds\":[{\"title\":\"🎉 ${{ github.event.repository.name }} ${{ github.ref_name }} veröffentlicht\",\"url\":\"https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}\",\"color\":6013317}]}"
